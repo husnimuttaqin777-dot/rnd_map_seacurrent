@@ -19,7 +19,7 @@ import sys
 
 import pandas as pd
 
-csv_file = "sea_current_now.csv"
+csv_file = "sea_current_indonesia.csv"
 
 df = pd.read_csv(csv_file)
 

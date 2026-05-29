@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import QtQuick.Shapes 1.15
 import QtLocation 5.15
 import QtPositioning 5.15
 
@@ -59,44 +60,44 @@ Window {
             delegate: Component {
                 MapQuickItem {
                     coordinate: QtPositioning.coordinate(lat, lon)
-                    anchorPoint.x: 12
+
+                    // Anchor to the tail of the arrow (left center)
+                    // so the arrow grows rightward then rotates from its tail
+                    anchorPoint.x: 2
                     anchorPoint.y: 12
 
-                    sourceItem: Item {
+                    sourceItem: Shape {
                         width: 24
                         height: 24
                         rotation: dir
+                        antialiasing: true
+                        layer.enabled: true
+                        layer.samples: 4   // MSAA — smooth diagonal lines
 
-                        // Arrow body — thin horizontal rectangle
-                        Rectangle {
-                            x: 3
-                            y: 11
-                            width: 17
-                            height: 2
-                            color: "#bd0b0b"
+                        // Arrow body: tail (2,12) → shaft end (17,12)
+                        ShapePath {
+                            strokeColor: "#bd0b0b"
+                            strokeWidth: 2
+                            fillColor:   "transparent"
+                            capStyle:    ShapePath.RoundCap
+                            joinStyle:   ShapePath.RoundJoin
+
+                            startX: 2;  startY: 12
+                            PathLine { x: 17; y: 12 }
                         }
 
-                        // Arrowhead top leg
-                        // 5px diagonal at 45° upward from tip (x=20, y=12)
-                        Rectangle {
-                            x: 14
-                            y: 7
-                            width: 9
-                            height: 2
-                            color: "#bd0b0b"
-                            rotation: -38
-                            transformOrigin: Item.TopRight
-                        }
+                        // Arrowhead: tip at (22,12), top leg to (15,7)
+                        ShapePath {
+                            strokeColor: "#bd0b0b"
+                            strokeWidth: 2
+                            fillColor:   "transparent"
+                            capStyle:    ShapePath.RoundCap
+                            joinStyle:   ShapePath.RoundJoin
 
-                        // Arrowhead bottom leg
-                        Rectangle {
-                            x: 14
-                            y: 13
-                            width: 9
-                            height: 2
-                            color: "#bd0b0b"
-                            rotation: 38
-                            transformOrigin: Item.TopRight
+                            startX: 22; startY: 12
+                            PathLine { x: 15; y: 7  }
+                            PathMove  { x: 22; y: 12 }
+                            PathLine  { x: 15; y: 17 }
                         }
                     }
                 }

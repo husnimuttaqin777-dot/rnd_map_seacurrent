@@ -1,82 +1,85 @@
-import requests
+import asyncio
+import aiohttp
 import numpy as np
 import pandas as pd
+import os
 from datetime import datetime
 
-import os
+# ── Config ──────────────────────────────────────────────────────────────
+FILENAME     = "sea_current_now.csv"
+LAT_TOP      =   5.719486
+LON_LEFT     =  94.827627
+LAT_BOTTOM   =  -8.879424
+LON_RIGHT    = 140.225176
+GRID_SIZE    = 20          # 20×20 = 400 points
+MAX_WORKERS  = 20          # concurrent requests (safe limit)
+TIMEOUT_SEC  = 50
 
-filename = "sea_current_now.csv"
+# ── Grid ─────────────────────────────────────────────────────────────────
+lat_grid = np.linspace(LAT_TOP, LAT_BOTTOM, GRID_SIZE)
+lon_grid = np.linspace(LON_LEFT, LON_RIGHT, GRID_SIZE)
+points   = [(lat, lon) for lat in lat_grid for lon in lon_grid]
 
-if os.path.exists(filename):
-
-    os.remove(filename)
-
-    print("csv lama dihapus")
-
-else:
-
-    print("csv belum ada")
-
-# area grid
-lat_top = 0.318253
-lon_left = 103.645815
-
-lat_bottom = -0.343617
-lon_right = 104.415788
-
-# 10x10 = 100 titik
-lat_grid = np.linspace(lat_top, lat_bottom, 10)
-lon_grid = np.linspace(lon_left, lon_right, 10)
-
-rows = []
-
-count = 0
-
-
-
-for lat in lat_grid:
-    for lon in lon_grid:
-
-        count += 1
-        print(f"Request {count}/100")
-
-        url = (
-            f"https://marine-api.open-meteo.com/v1/marine?"
-            f"latitude={lat}"
-            f"&longitude={lon}"
-            f"&hourly=ocean_current_velocity,ocean_current_direction"
-            f"&forecast_days=1"
-        )
-
+# ── Single async fetch ────────────────────────────────────────────────────
+async def fetch_point(session, semaphore, idx, total, lat, lon):
+    url = (
+        f"https://marine-api.open-meteo.com/v1/marine"
+        f"?latitude={lat}&longitude={lon}"
+        f"&hourly=ocean_current_velocity,ocean_current_direction"
+        f"&forecast_days=1"
+    )
+    async with semaphore:
         try:
-
-            r = requests.get(url, timeout=15)
-            data = r.json()
-
-            # ambil data jam pertama / current hour
-            speed = data["hourly"]["ocean_current_velocity"][0]
-            direction = data["hourly"]["ocean_current_direction"][0]
-            time_data = data["hourly"]["time"][0]
-
-            rows.append({
-                "latitude": lat,
-                "longitude": lon,
-                "time": time_data,
-                "sea_current_speed": speed,
-                "direction": direction
-            })
-
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=TIMEOUT_SEC)) as r:
+                data  = await r.json()
+                speed = data["hourly"]["ocean_current_velocity"][0]
+                direc = data["hourly"]["ocean_current_direction"][0]
+                time_ = data["hourly"]["time"][0]
+                print(f"  ✓ [{idx:>3}/{total}] ({lat:.4f}, {lon:.4f})  {speed:.2f} m/s  {direc:.0f}°")
+                return {
+                    "latitude"          : round(lat, 6),
+                    "longitude"         : round(lon, 6),
+                    "time"              : time_,
+                    "sea_current_speed" : speed,
+                    "direction"         : direc,
+                }
         except Exception as e:
-            print("ERROR", lat, lon, e)
+            print(f"  ✗ [{idx:>3}/{total}] ({lat:.4f}, {lon:.4f})  ERROR: {e}")
+            return None
 
-df = pd.DataFrame(rows)
+# ── Main coroutine ────────────────────────────────────────────────────────
+async def main():
+    if os.path.exists(FILENAME):
+        os.remove(FILENAME)
+        print(f"Deleted old file: {FILENAME}")
 
-filename = "sea_current_now.csv"
+    total     = len(points)
+    semaphore = asyncio.Semaphore(MAX_WORKERS)
+    t_start   = datetime.now()
 
-df.to_csv(
-    filename,
-    index=False
-)
+    print(f"\nFetching {total} grid points ({GRID_SIZE}×{GRID_SIZE}) with {MAX_WORKERS} concurrent workers...\n")
 
-print("saved:", filename)
-print(df.head())
+    async with aiohttp.ClientSession() as session:
+        tasks = [
+            fetch_point(session, semaphore, idx + 1, total, lat, lon)
+            for idx, (lat, lon) in enumerate(points)
+        ]
+        results = await asyncio.gather(*tasks)
+
+    elapsed = (datetime.now() - t_start).total_seconds()
+
+    rows = [r for r in results if r is not None]
+    df   = pd.DataFrame(rows)
+    df.to_csv(FILENAME, index=False)
+
+    print(f"\n{'─'*50}")
+    print(f"  Done in     : {elapsed:.1f}s  (was ~{total * 1.5 / 60:.0f} min sequential)")
+    print(f"  Saved       : {FILENAME}")
+    print(f"  Points OK   : {len(rows)}/{total}")
+    print(f"  Failed      : {total - len(rows)}")
+    print(f"{'─'*50}\n")
+    print(df.head(10).to_string(index=False))
+
+# ── Entry point ───────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    asyncio.run(main())

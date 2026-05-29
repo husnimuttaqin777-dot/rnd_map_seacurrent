@@ -97,7 +97,7 @@ Window {
             sourceItem: Shape {
                 width: 24
                 height: 24
-                rotation: dir + 90   // ← +90 offset here
+                rotation: dir - 90   // ← +90 offset here
                 antialiasing: true
                 layer.enabled: true
                 layer.samples: 4

@@ -2,7 +2,6 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtLocation 5.15
 import QtPositioning 5.15
-import QtQuick.Shapes 1.15
 
 Window {
     visible: true
@@ -10,10 +9,6 @@ Window {
     height: 600
     title: "Sea Current Area Map"
 
-    
-
-    // Use ListModel instead of a plain JS array — 
-    // enables proper add/remove/update without full rebuild
     ListModel {
         id: currentModel
         ListElement { lat: 0.5270; lon: 103.2680; dir: 20  }
@@ -59,62 +54,49 @@ Window {
         zoomLevel: 15
         activeMapType: supportedMapTypes[1]
 
-        // MapItemView is the map-aware replacement for Repeater inside Map.
-        // It properly manages item lifecycle as the map pans/zooms
-        // (off-screen items can be culled), unlike raw Repeater.
         MapItemView {
             model: currentModel
-            delegate: arrowDelegate
-        }
+            delegate: Component {
+                MapQuickItem {
+                    coordinate: QtPositioning.coordinate(lat, lon)
+                    anchorPoint.x: 12
+                    anchorPoint.y: 12
 
-        Component {
-            id: arrowDelegate
-
-            MapQuickItem {
-                coordinate: QtPositioning.coordinate(lat, lon)
-                anchorPoint.x: 12
-                anchorPoint.y: 12
-
-                sourceItem: Item {
-                    width: 24
-                    height: 24
-
-                    // Rotation applied here — avoids re-running onPaint per item
-                    rotation: dir
-
-                    // Single Shape replaces Canvas — no backing texture,
-                    // no JS context, renders via Qt's scene graph directly.
-                    // Much lighter than Canvas for simple geometry.
-                    Shape {
+                    sourceItem: Item {
                         width: 24
                         height: 24
-                        antialiasing: true
+                        rotation: dir
 
-                        // Arrow body
-                        ShapePath {
-                            strokeColor: "#bd0b0b"
-                            strokeWidth: 2
-                            fillColor: "transparent"
-                            startX: 3;  startY: 12
-                            PathLine { x: 20; y: 12 }
+                        // Arrow body — thin horizontal rectangle
+                        Rectangle {
+                            x: 3
+                            y: 11
+                            width: 17
+                            height: 2
+                            color: "#bd0b0b"
                         }
 
-                        // Arrowhead top
-                        ShapePath {
-                            strokeColor: "#bd0b0b"
-                            strokeWidth: 2
-                            fillColor: "transparent"
-                            startX: 20; startY: 12
-                            PathLine { x: 15; y: 7 }
+                        // Arrowhead top leg
+                        // 5px diagonal at 45° upward from tip (x=20, y=12)
+                        Rectangle {
+                            x: 14
+                            y: 7
+                            width: 9
+                            height: 2
+                            color: "#bd0b0b"
+                            rotation: -38
+                            transformOrigin: Item.TopRight
                         }
 
-                        // Arrowhead bottom
-                        ShapePath {
-                            strokeColor: "#bd0b0b"
-                            strokeWidth: 2
-                            fillColor: "transparent"
-                            startX: 20; startY: 12
-                            PathLine { x: 15; y: 17 }
+                        // Arrowhead bottom leg
+                        Rectangle {
+                            x: 14
+                            y: 13
+                            width: 9
+                            height: 2
+                            color: "#bd0b0b"
+                            rotation: 38
+                            transformOrigin: Item.TopRight
                         }
                     }
                 }

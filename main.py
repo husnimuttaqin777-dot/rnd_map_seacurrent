@@ -5,49 +5,35 @@ from PyQt5.QtPositioning import QGeoCoordinate
 import csv
 from collections import defaultdict
 
-def load_polygons():
-    component_polygons = defaultdict(lambda: {"points": [], "type": "", "value": ""})
-    polygons = []
+######  PROGRAM MEMANGGIL WINDOWS PYQT5 ##########################
 
-    with open("isobath_batam.csv", newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            cid = int(row["ComponentId"])
-            try:
-                lat = float(row["Latitude"])
-                lon = float(row["Longitude"])
-                val = float(row["Value1"]) if row["Value1"] else 0.0
-            except ValueError:
-                continue
-            component_polygons[cid]["points"].append(QGeoCoordinate(lat, lon))
-            component_polygons[cid]["type"] = row["Type"]
-            component_polygons[cid]["value"] = val
+####### memanggil library PyQt5 ##################################
+#----------------------------------------------------------------#
+from PyQt5.QtCore import * 
+from PyQt5.QtGui import * 
+from PyQt5.QtQml import * 
+from PyQt5.QtWidgets import *
+from PyQt5.QtQuick import *  
+import sys
+#----------------------------------------------------------------#
 
-    for comp in component_polygons.values():
-        coords = comp["points"]
-        if len(coords) < 3:
-            continue
 
-        center_lat = sum(c.latitude() for c in coords) / len(coords)
-        center_lon = sum(c.longitude() for c in coords) / len(coords)
-        polygons.append({
-            "points": coords,
-            "type": comp["type"],
-            "value": f"{comp['value']:.1f}",
-            "center": QGeoCoordinate(center_lat, center_lon)
-        })
+########## mengisi class table dengan instruksi pyqt5#############
+#----------------------------------------------------------------#
+class table(QObject):    
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.app = QApplication(sys.argv)
+        self.engine = QQmlApplicationEngine(self)
+        self.engine.rootContext().setContextProperty("backend", self)    
+        self.engine.load(QUrl("main.qml"))
+        sys.exit(self.app.exec_())
+#----------------------------------------------------------------#
 
-    return polygons
-
-app = QGuiApplication([])
-engine = QQmlApplicationEngine()
-
-polygons = load_polygons()
-
-print("Isi polygons:", polygons)
-print("Tipe polygons:", type(polygons))
-
-engine.rootContext().setContextProperty("allPolygons", polygons)
-
-engine.load(QUrl("main.qml"))
-app.exec_()
+########## memanggil class table di mainloop######################
+#----------------------------------------------------------------#    
+if __name__ == "__main__":
+    main = table()
+    
+    
+#----------------------------------------------------------------#

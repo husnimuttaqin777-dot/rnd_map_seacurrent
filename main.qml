@@ -164,5 +164,14 @@ Window {
             backend.update_data("update")
         }
     }
+
+    Timer{
+        interval: 60000
+        running: true
+        repeat: true
+        onTriggered: {
+            backend.update_data("update")
+        }
+    }
     
 }

@@ -13,13 +13,13 @@ else:
     print("csv belum ada")
 
 # area grid
-lat_top    =     2.201019
-lon_left   =  101.140925
-lat_bottom =    0.653793
-lon_right  = 104.978627
+lat_top    =  1.510931
+lon_left   =  103.565077
+lat_bottom =  0.7
+lon_right  = 104.428989
 
-lat_grid = np.linspace(lat_top, lat_bottom, 30)
-lon_grid = np.linspace(lon_left, lon_right, 30)
+lat_grid = np.linspace(lat_top, lat_bottom, 15)
+lon_grid = np.linspace(lon_left, lon_right, 15)
 
 coords = [(lat, lon) for lat in lat_grid for lon in lon_grid]
 total = len(coords)

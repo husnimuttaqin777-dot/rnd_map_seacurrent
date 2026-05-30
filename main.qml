@@ -166,7 +166,7 @@ Window {
     }
 
     Timer{
-        interval: 60000
+        interval: 1800000
         running: true
         repeat: true
         onTriggered: {

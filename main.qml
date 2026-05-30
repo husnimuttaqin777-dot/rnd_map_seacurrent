@@ -4,6 +4,9 @@ import QtQuick.Shapes 1.15
 import QtLocation 5.15
 import QtPositioning 5.15
 
+import QtQuick 2.15
+import QtQuick.Window 2.15
+import QtQuick.Controls 2.15
 Window {
     visible: true
     width: 800
@@ -45,25 +48,46 @@ Window {
         id: currentModel
     }
 
-    Component.onCompleted: {
+    function updateMapData(){
+
+        currentModel.clear()
+
         currentArray = backend.getCurrentArray()
 
-        console.log(currentArray.length)
+        console.log("Jumlah data:", currentArray.length)
 
-        for(var i=0;i<currentArray.length;i++){
+        for(var i=0; i<currentArray.length; i++){
 
             console.log(
                 currentArray[i].lat,
                 currentArray[i].lon,
                 currentArray[i].dir
             )
-        }
 
-
-        for (var i = 0; i < currentArray.length; i++) {
-            currentModel.append(currentArray[i])
+            currentModel.append({
+                lat: currentArray[i].lat,
+                lon: currentArray[i].lon,
+                dir: currentArray[i].dir
+            })
         }
     }
+
+    Component.onCompleted: {
+        updateMapData()
+    }
+
+    Connections {
+        target: backend
+
+        function onUpdateFinished() {
+            currentModel.clear()  
+            updateMapData()
+        }
+
+    }
+
+
+
 
     Plugin {
         id: mapPlugin
@@ -128,5 +152,17 @@ Window {
     }
 }
     
+    
+
     }
+
+    Button{
+        x : 100
+        y : 100
+        text : "Update Data"
+        onClicked: {
+            backend.update_data("update")
+        }
+    }
+    
 }

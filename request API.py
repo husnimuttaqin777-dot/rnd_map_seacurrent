@@ -6,8 +6,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from shapely.geometry import Point, Polygon
 
 # ── ZONE: boundary polygon (lat, lon pairs) ──────────────────────
+# batam zone
 zone_lat = [1.155785, 1.155014, 1.156945, 1.151677, 1.143302, 1.138111, 1.148528, 1.151154]
 zone_lon = [103.893489, 103.896592, 103.897982, 103.914801, 103.920651, 103.917728, 103.909467, 103.895794]
+
+#dumai zone
+
 
 # ── HOW MANY POINTS inside the zone ──────────────────────────────
 n_points = 500   # ← change this number

@@ -19,29 +19,29 @@ import sys
 
 import pandas as pd
 
-csv_file = "sea_current_now.csv"
+csv_file = "wind_now.csv"
 
 df = pd.read_csv(csv_file)
 
-lat_current = df["latitude"].tolist()
+lat_seacurrent = df["latitude"].tolist()
 
-long_current = df["longitude"].tolist()
+long_seacurrent = df["longitude"].tolist()
 
-dir_current = df["direction"].tolist()
+dir_seacurrent = df["wind_direction"].tolist()
 
-print(lat_current)
-print(long_current)
-print(dir_current)
+print(lat_seacurrent)
+print(long_seacurrent)
+print(dir_seacurrent)
 
 current_data = []
 
-for i in range(len(lat_current)):
+for i in range(len(lat_seacurrent)):
 
     current_data.append({
 
-        "lat": lat_current[i],
-        "lon": long_current[i],
-        "dir": dir_current[i]
+        "lat": lat_seacurrent[i],
+        "lon": long_seacurrent[i],
+        "dir": dir_seacurrent[i]
 
     })
 
@@ -88,13 +88,13 @@ class table(QObject):
 
         current_data = []
 
-        for i in range(len(lat_current)):
+        for i in range(len(lat_seacurrent)):
 
             current_data.append({
 
-                "lat": lat_current[i],
-                "lon": long_current[i],
-                "dir": dir_current[i]
+                "lat": lat_seacurrent[i],
+                "lon": long_seacurrent[i],
+                "dir": dir_seacurrent[i]
 
             })
 
@@ -109,13 +109,13 @@ class table(QObject):
     
 
     def on_update_finished(self):
-        global lat_current, long_current, dir_current
+        global lat_seacurrent, long_seacurrent, dir_seacurrent
 
-        csv_file = "sea_current_now.csv"
+        csv_file = "wind_now.csv"
         df = pd.read_csv(csv_file)
-        lat_current = df["latitude"].tolist()
-        long_current = df["longitude"].tolist()
-        dir_current = df["direction"].tolist()
+        lat_seacurrent = df["latitude"].tolist()
+        long_seacurrent = df["longitude"].tolist()
+        dir_seacurrent = df["wind_direction"].tolist()
 
         print("update_data.py finished — safe to update UI here")
         self.updateFinished.emit()   

@@ -45,12 +45,12 @@ Window {
 
     // ── ListModel populated from the array at startup ────────────────
     ListModel {
-        id: currentModel
+        id: current_sea_model
     }
 
-    function updateMapData(){
+    function update_seacurrent_data(){
 
-        currentModel.clear()
+        current_sea_model.clear()
 
         currentArray = backend.getCurrentArray()
 
@@ -64,7 +64,7 @@ Window {
                 currentArray[i].dir
             )
 
-            currentModel.append({
+            current_sea_model.append({
                 lat: currentArray[i].lat,
                 lon: currentArray[i].lon,
                 dir: currentArray[i].dir
@@ -73,15 +73,15 @@ Window {
     }
 
     Component.onCompleted: {
-        updateMapData()
+        update_seacurrent_data()
     }
 
     Connections {
         target: backend
 
         function onUpdateFinished() {
-            currentModel.clear()  
-            updateMapData()
+            current_sea_model.clear()  
+            update_seacurrent_data()
         }
 
     }
@@ -111,7 +111,7 @@ Window {
         activeMapType: supportedMapTypes[1]
 
     MapItemView {
-    model: currentModel
+    model: current_sea_model
     delegate: Component {
         MapQuickItem {
             coordinate: QtPositioning.coordinate(lat, lon)
